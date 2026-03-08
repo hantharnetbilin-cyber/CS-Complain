@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HanTharNet FTTH Service Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Pyidaungsu&display=swap');
+        body { font-family: 'Pyidaungsu', sans-serif; background-color: #ffffff; }
+        .tab-active { border-bottom: 4px solid #e11d48; color: #e11d48; font-weight: bold; }
+        .input-box { border: 1px solid #e5e7eb; padding: 10px; border-radius: 8px; width: 100%; outline: none; transition: 0.3s; }
+        .input-box:focus { border-color: #e11d48; box-shadow: 0 0 5px rgba(225, 29, 72, 0.2); }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+    <div class="max-w-xl mx-auto bg-white min-h-screen shadow-2xl border-x border-gray-100">
+        <div class="p-6 text-center border-b border-gray-100">
+            <img src="https://i.ibb.co/3ykXvNf/1000026619.jpg" alt="HanTharNet Logo" class="h-24 mx-auto mb-2 object-contain">
+            <h1 class="text-red-600 text-xl font-bold tracking-tighter">HANTHARNET FTTH</h1>
+        </div>
+
+        <div class="flex">
+            <button id="paymentTab" onclick="switchTab('payment')" class="flex-1 py-4 text-center tab-active transition uppercase text-sm tracking-wide">Payment</button>
+            <button id="complainTab" onclick="switchTab('complain')" class="flex-1 py-4 text-center text-gray-500 hover:text-red-600 transition uppercase text-sm tracking-wide border-b">Complaint</button>
+        </div>
+
+        <div class="p-6">
+            <form id="google-sheet-form">
+                <div class="grid grid-cols-1 gap-4 mb-6">
+                    <div>
+                        <label class="block text-gray-600 text-xs font-bold mb-1 uppercase">Customer ID</label>
+                        <input type="text" name="customerID" required class="input-box" placeholder="HTN-0001">
+                    </div>
+                    <div>
+                        <label class="block text-gray-600 text-xs font-bold mb-1 uppercase">Customer Name</label>
+                        <input type="text" name="customerName" required class="input-box" placeholder="ဦးမောင်မောင်">
+                    </div>
+                </div>
+
+                <div id="paymentSection">
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block text-gray-600 text-xs font-bold mb-1 uppercase">Plan Price</label>
+                            <input type="number" name="planPrice" id="planPrice" class="input-box" placeholder="25000">
+                        </div>
+                        <div>
+                            <label class="block text-gray-600 text-xs font-bold mb-1 uppercase">Month</label>
+                            <input type="number" name="month" id="month" class="input-box" placeholder="1">
+                        </div>
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-gray-600 text-xs font-bold mb-1 uppercase">Payment Method</label>
+                        <select name="method" class="input-box bg-white">
+                            <option value="MMQR">MMQR (Kpay / Wave)</option>
+                            <option value="Cash">Cash (လက်ငင်းငွေသား)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="complainSection" class="hidden">
+                    <div class="mb-4">
+                        <label class="block text-gray-600 text-xs font-bold mb-1 uppercase">Issue Type</label>
+                        <select name="issueType" class="input-box bg-white">
+                            <option value="Slow">Internet Slow (လိုင်းမကောင်းခြင်း)</option>
+                            <option value="LOS">LOS Red Light (မီးနီနေခြင်း)</option>
+                            <option value="NoPower">No Power (စက်မီးမလင်းခြင်း)</option>
+                            <option value="Other">Other (အခြား)</option>
+                        </select>
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-gray-600 text-xs font-bold mb-1 uppercase">Remark</label>
+                        <textarea name="remark" rows="3" class="input-box" placeholder="အသေးစိတ်အချက်အလက်..."></textarea>
+                    </div>
+                </div>
+
+                <button type="submit" id="submitBtn" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded-lg transition shadow-lg shadow-red-200 uppercase tracking-widest text-sm">
+                    Submit Record
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let currentMode = 'payment';
+
+        function switchTab(mode) {
+            currentMode = mode;
+            const pSection = document.getElementById('paymentSection');
+            const cSection = document.getElementById('complainSection');
+            const pTab = document.getElementById('paymentTab');
+            const cTab = document.getElementById('complainTab');
+
+            if (mode === 'payment') {
+                pSection.classList.remove('hidden');
+                cSection.classList.add('hidden');
+                pTab.classList.add('tab-active');
+                cTab.classList.remove('tab-active');
+                cTab.classList.add('border-b');
+            } else {
+                pSection.classList.add('hidden');
+                cSection.classList.remove('hidden');
+                cTab.classList.add('tab-active');
+                pTab.classList.remove('tab-active');
+                pTab.classList.add('border-b');
+            }
+        }
+
+        // Google Sheet Connection Logic
+        const scriptURL = 'YOUR_GOOGLE_SCRIPT_URL_HERE'; // ဒီနေရာမှာ အောက်က အဆင့်အတိုင်း လုပ်ထားတဲ့ URL ထည့်ပေးပါ
+        const form = document.getElementById('google-sheet-form');
+
+        form.addEventListener('submit', e => {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            btn.innerHTML = 'Sending...';
+            btn.disabled = true;
+
+            fetch(scriptURL, { method: 'POST', body: new FormData(form)})
+                .then(response => {
+                    alert('အောင်မြင်စွာ မှတ်တမ်းတင်ပြီးပါပြီ!');
+                    btn.innerHTML = 'Submit Record';
+                    btn.disabled = false;
+                    form.reset();
+                })
+                .catch(error => {
+                    alert('Error တက်နေပါတယ်၊ ပြန်ကြိုးစားကြည့်ပါ!');
+                    btn.innerHTML = 'Submit Record';
+                    btn.disabled = false;
+                });
+        });
+    </script>
+</body>
+</html>
